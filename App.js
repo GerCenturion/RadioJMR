@@ -1,20 +1,56 @@
-import { StatusBar } from "expo-status-bar";
-import { StyleSheet, Text, View } from "react-native";
+import React from "react";
+import { NavigationContainer } from "@react-navigation/native";
+import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
+import FontAwesome5 from "react-native-vector-icons/FontAwesome5";
+import Biblia from "./src/components/Biblia";
+import Devocionales from "./src/components/Devocionales";
+import RadioStream from "./src/components/RadioStrem";
 
-export default function App() {
+const Tab = createBottomTabNavigator();
+
+const App = () => {
   return (
-    <View style={styles.container}>
-      <Text>Radio JMR</Text>
-      <StatusBar style="auto" />
-    </View>
-  );
-}
+    <NavigationContainer>
+      <Tab.Navigator
+        screenOptions={({ route }) => ({
+          tabBarIcon: ({ color, size }) => {
+            let iconName;
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#fff",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-});
+            if (route.name === "Biblia") {
+              iconName = "bible";
+            } else if (route.name === "Devocionales") {
+              iconName = "book";
+            } else if (route.name === "RadioStream") {
+              iconName = "headphones";
+            }
+
+            // You can return any component that you like here!
+            return (
+              <FontAwesome5
+                name={iconName}
+                size={30}
+                color="#900"
+                solid
+              />
+            );
+          },
+        })}
+      >
+        <Tab.Screen
+          name="Biblia"
+          component={Biblia}
+        />
+        <Tab.Screen
+          name="Devocionales"
+          component={Devocionales}
+        />
+        <Tab.Screen
+          name="RadioStream"
+          component={RadioStream}
+        />
+      </Tab.Navigator>
+    </NavigationContainer>
+  );
+};
+
+export default App;
