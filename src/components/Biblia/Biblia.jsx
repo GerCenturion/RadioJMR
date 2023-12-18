@@ -1,5 +1,13 @@
-import React from "react";
-import { View, Text, ScrollView, StyleSheet } from "react-native";
+import React, { useState, useEffect, useRef } from "react";
+import {
+  View,
+  Text,
+  ScrollView,
+  StyleSheet,
+  Button,
+  Animated,
+} from "react-native";
+import { Picker } from "@react-native-picker/picker";
 import bibliaData from "./RV1960.json";
 
 const Biblia = () => {
@@ -72,37 +80,88 @@ const Biblia = () => {
     "Apocalipsis",
   ];
 
+  const [selectedBook, setSelectedBook] = useState(0);
+  const [selectedChapter, setSelectedChapter] = useState(0);
+
+  const handleBookChange = (value) => {
+    setSelectedBook(value);
+    setSelectedChapter(0);
+  };
+
+  const handleChapterChange = (value) => {
+    setSelectedChapter(value);
+  };
+
+  const handleSearch = () => {
+    console.log("Realizar búsqueda con las selecciones:", {
+      libro: nombresLibros[selectedBook],
+      capitulo: selectedChapter + 1,
+      versiculo: selectedVerse + 1,
+    });
+  };
+
+  useEffect(() => {
+    const maxChapter = bibliaData?.bible?.b[selectedBook]?.c.length || 0;
+    if (selectedChapter >= maxChapter) {
+      setSelectedChapter(maxChapter - 1);
+    }
+  }, [selectedBook, selectedChapter]);
+
   return (
     <ScrollView style={styles.container}>
+      <View style={styles.menu}>
+        <Picker
+          selectedValue={selectedBook}
+          onValueChange={handleBookChange}
+          style={styles.picker}
+        >
+          {nombresLibros.map((libro, index) => (
+            <Picker.Item
+              key={index}
+              label={libro}
+              value={index}
+            />
+          ))}
+        </Picker>
+
+        <Picker
+          selectedValue={selectedChapter}
+          onValueChange={handleChapterChange}
+          style={styles.picker}
+        >
+          {Array.from(
+            { length: bibliaData?.bible?.b[selectedBook]?.c.length || 0 },
+            (_, index) => index + 1
+          ).map((chapter) => (
+            <Picker.Item
+              key={chapter}
+              label={`${chapter}`}
+              value={chapter - 1}
+            />
+          ))}
+        </Picker>
+      </View>
+
       <View style={styles.content}>
-        {bibliaData?.bible?.b.map((book, bookIndex) => (
-          <View
-            key={bookIndex + 1}
-            style={styles.bookContainer}
-          >
-            <Text style={styles.bookTitle}>{`${
-              nombresLibros[bookIndex] || "Nombre no disponible"
-            }`}</Text>
-            {Array.isArray(book?.c) &&
-              book?.c.map((chapter, chapterIndex) => (
-                <View
-                  key={chapterIndex + 1}
-                  style={styles.chapterContainer}
-                >
-                  <Text style={styles.chapterTitle}>{`${
-                    chapterIndex + 1
-                  }`}</Text>
-                  {Array.isArray(chapter?.v) &&
-                    chapter?.v.map((verse, verseIndex) => (
-                      <Text
-                        key={verseIndex + 1}
-                        style={styles.verse}
-                      >{`${verseIndex + 1}. ${verse}`}</Text>
-                    ))}
-                </View>
-              ))}
-          </View>
-        ))}
+        <Text style={styles.bookTitle}>{`${nombresLibros[selectedBook]}`}</Text>
+        <View
+          key={selectedChapter + 1}
+          style={styles.chapterContainer}
+        >
+          <Text style={styles.chapterTitle}>{Number(selectedChapter) + 1}</Text>
+
+          {Array.isArray(
+            bibliaData?.bible?.b[selectedBook]?.c[selectedChapter]?.v
+          ) &&
+            bibliaData?.bible?.b[selectedBook]?.c[selectedChapter]?.v.map(
+              (verse, verseIndex) => (
+                <Text
+                  key={verseIndex + 1}
+                  style={styles.verse}
+                >{`${verseIndex + 1}. ${verse}`}</Text>
+              )
+            )}
+        </View>
       </View>
     </ScrollView>
   );
@@ -111,35 +170,41 @@ const Biblia = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f0f0f0", // Color de fondo de toda la pantalla
+    backgroundColor: "#f0f0f0",
+  },
+  menu: {
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    padding: 8,
+  },
+  picker: {
+    width: 120,
+    marginRight: 8,
   },
   content: {
     padding: 16,
-  },
-  bookContainer: {
-    marginBottom: 20,
   },
   bookTitle: {
     fontSize: 18,
     fontWeight: "bold",
     marginBottom: 10,
-    color: "#333", // Color del texto del nombre del libro
+    color: "#333",
   },
   chapterContainer: {
     marginLeft: 16,
     padding: 10,
-    backgroundColor: "#fff", // Color de fondo de la sección del capítulo
+    backgroundColor: "#fff",
     borderRadius: 8,
   },
   chapterTitle: {
     fontSize: 16,
     fontWeight: "bold",
     marginBottom: 8,
-    color: "#555", // Color del texto del título del capítulo
+    color: "#555",
   },
   verse: {
     fontSize: 14,
-    color: "#666", // Color del texto del versículo
+    color: "#666",
   },
 });
 
