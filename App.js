@@ -2,7 +2,7 @@ import React from "react";
 import { NavigationContainer } from "@react-navigation/native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import FontAwesome5 from "react-native-vector-icons/FontAwesome5";
-import Biblia from "./src/components/Biblia";
+import Biblia from "./src/components/Biblia/Biblia";
 import Devocionales from "./src/components/Devocionales";
 import RadioStream from "./src/components/RadioStrem";
 
@@ -24,7 +24,6 @@ const App = () => {
               iconName = "headphones";
             }
 
-            // You can return any component that you like here!
             return (
               <FontAwesome5
                 name={iconName}
