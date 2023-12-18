@@ -4,8 +4,7 @@ import {
   Text,
   ScrollView,
   StyleSheet,
-  Button,
-  Animated,
+  TouchableOpacity,
 } from "react-native";
 import { Picker } from "@react-native-picker/picker";
 import bibliaData from "./RV1960.json";
@@ -82,22 +81,35 @@ const Biblia = () => {
 
   const [selectedBook, setSelectedBook] = useState(0);
   const [selectedChapter, setSelectedChapter] = useState(0);
+  const [selectedVerse, setSelectedVerse] = useState(0); // Nuevo estado para el versículo
 
   const handleBookChange = (value) => {
     setSelectedBook(value);
     setSelectedChapter(0);
+    setSelectedVerse(0);
   };
 
   const handleChapterChange = (value) => {
     setSelectedChapter(value);
+    setSelectedVerse(0); // Al cambiar el capítulo, establecer el versículo en 1
   };
 
-  const handleSearch = () => {
-    console.log("Realizar búsqueda con las selecciones:", {
-      libro: nombresLibros[selectedBook],
-      capitulo: selectedChapter + 1,
-      versiculo: selectedVerse + 1,
-    });
+  const handlePreviousChapter = () => {
+    setSelectedChapter((prevChapter) => Math.max(prevChapter - 1, 0));
+    setSelectedVerse(0); // Al cambiar el capítulo, establecer el versículo en 1
+  };
+
+  const scrollViewRef = useRef();
+
+  const handleNextChapter = () => {
+    const maxChapter = bibliaData?.bible?.b[selectedBook]?.c.length || 0;
+    setSelectedChapter((prevChapter) =>
+      Math.min(prevChapter + 1, maxChapter - 1)
+    );
+    setSelectedVerse(0);
+
+    // Scroll al principio del ScrollView
+    scrollViewRef.current?.scrollTo({ x: 0, y: 0, animated: true });
   };
 
   useEffect(() => {
@@ -108,8 +120,17 @@ const Biblia = () => {
   }, [selectedBook, selectedChapter]);
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView
+      ref={scrollViewRef} // Referencia del ScrollView
+      style={styles.container}
+    >
       <View style={styles.menu}>
+        <TouchableOpacity
+          onPress={handlePreviousChapter}
+          style={styles.button}
+        >
+          <Text style={styles.buttonText}>Anterior</Text>
+        </TouchableOpacity>
         <Picker
           selectedValue={selectedBook}
           onValueChange={handleBookChange}
@@ -158,10 +179,18 @@ const Biblia = () => {
                 <Text
                   key={verseIndex + 1}
                   style={styles.verse}
-                >{`${verseIndex + 1}. ${verse}`}</Text>
+                >{`${selectedVerse + verseIndex + 1}. ${verse}`}</Text>
               )
             )}
         </View>
+      </View>
+      <View style={styles.buttonContainer}>
+        <TouchableOpacity
+          onPress={handleNextChapter}
+          style={[styles.button, styles.nextButton]}
+        >
+          <Text style={styles.buttonText}>Siguiente</Text>
+        </TouchableOpacity>
       </View>
     </ScrollView>
   );
@@ -174,12 +203,13 @@ const styles = StyleSheet.create({
   },
   menu: {
     flexDirection: "row",
-    justifyContent: "flex-end",
+    justifyContent: "space-between",
     padding: 8,
+    alignItems: "center",
   },
   picker: {
     width: 120,
-    marginRight: 8,
+    marginHorizontal: 8,
   },
   content: {
     padding: 16,
@@ -205,6 +235,29 @@ const styles = StyleSheet.create({
   verse: {
     fontSize: 14,
     color: "#666",
+  },
+
+  button: {
+    backgroundColor: "#3498db",
+    padding: 10,
+    borderRadius: 5,
+  },
+  buttonText: {
+    color: "#fff",
+    fontSize: 16,
+    textAlign: "center",
+  },
+
+  buttonContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: 16,
+  },
+  nextButton: {
+    position: "absolute",
+    right: 0,
+    bottom: 0,
   },
 });
 
