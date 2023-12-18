@@ -7,7 +7,9 @@ import {
   TouchableOpacity,
 } from "react-native";
 import { Picker } from "@react-native-picker/picker";
-import bibliaData from "./RV1960.json";
+import bibliaDataRV1960 from "./RV1960.json";
+import bibliaDataNVI from "./NVI.json";
+import bibliaDataNTV from "./NTV.json";
 
 const Biblia = () => {
   const nombresLibros = [
@@ -79,49 +81,83 @@ const Biblia = () => {
     "Apocalipsis",
   ];
 
-  const [selectedBook, setSelectedBook] = useState(0);
-  const [selectedChapter, setSelectedChapter] = useState(0);
-  const [selectedVerse, setSelectedVerse] = useState(0); // Nuevo estado para el versículo
+  const [selectedFilters, setSelectedFilters] = useState({
+    version: "RV1960",
+    book: 0,
+    chapter: 0,
+    verse: 0,
+  });
 
   const handleBookChange = (value) => {
-    setSelectedBook(value);
-    setSelectedChapter(0);
-    setSelectedVerse(0);
+    setSelectedFilters((prevFilters) => ({
+      ...prevFilters,
+      book: value,
+      chapter: 0,
+      verse: 0,
+    }));
   };
 
   const handleChapterChange = (value) => {
-    setSelectedChapter(value);
-    setSelectedVerse(0); // Al cambiar el capítulo, establecer el versículo en 1
+    setSelectedFilters((prevFilters) => ({
+      ...prevFilters,
+      chapter: value,
+      verse: 0,
+    }));
   };
 
   const handlePreviousChapter = () => {
-    setSelectedChapter((prevChapter) => Math.max(prevChapter - 1, 0));
-    setSelectedVerse(0); // Al cambiar el capítulo, establecer el versículo en 1
+    setSelectedFilters((prevFilters) => ({
+      ...prevFilters,
+      chapter: Math.max(prevFilters.chapter - 1, 0),
+      verse: 0,
+    }));
   };
 
-  const scrollViewRef = useRef();
-
   const handleNextChapter = () => {
-    const maxChapter = bibliaData?.bible?.b[selectedBook]?.c.length || 0;
-    setSelectedChapter((prevChapter) =>
-      Math.min(prevChapter + 1, maxChapter - 1)
-    );
-    setSelectedVerse(0);
+    const maxChapter =
+      bibliaData[selectedFilters.version]?.bible?.b[selectedFilters.book]?.c
+        .length || 0;
+    const nextChapter = Math.min(selectedFilters.chapter + 1, maxChapter - 1);
 
-    // Scroll al principio del ScrollView
+    setSelectedFilters((prevFilters) => ({
+      ...prevFilters,
+      chapter: nextChapter,
+      verse: 0,
+    }));
+
     scrollViewRef.current?.scrollTo({ x: 0, y: 0, animated: true });
   };
 
+  const handleVersionChange = (value) => {
+    setSelectedFilters((prevFilters) => ({
+      ...prevFilters,
+      version: value,
+    }));
+  };
+
   useEffect(() => {
-    const maxChapter = bibliaData?.bible?.b[selectedBook]?.c.length || 0;
-    if (selectedChapter >= maxChapter) {
-      setSelectedChapter(maxChapter - 1);
+    const maxChapter =
+      bibliaData[selectedFilters.version]?.bible?.b[selectedFilters.book]?.c
+        .length || 0;
+    if (selectedFilters.chapter >= maxChapter) {
+      setSelectedFilters((prevFilters) => ({
+        ...prevFilters,
+        chapter: maxChapter - 1,
+      }));
     }
-  }, [selectedBook, selectedChapter]);
+  }, [selectedFilters.book, selectedFilters.chapter, selectedFilters.version]);
+
+  const scrollViewRef = useRef();
+
+  const bibliaData = {
+    RV1960: bibliaDataRV1960,
+    NVI: bibliaDataNVI,
+    NTV: bibliaDataNTV,
+  };
 
   return (
     <ScrollView
-      ref={scrollViewRef} // Referencia del ScrollView
+      ref={scrollViewRef}
       style={styles.container}
     >
       <View style={styles.menu}>
@@ -131,8 +167,28 @@ const Biblia = () => {
         >
           <Text style={styles.buttonText}>Anterior</Text>
         </TouchableOpacity>
+
         <Picker
-          selectedValue={selectedBook}
+          selectedValue={selectedFilters.version}
+          onValueChange={handleVersionChange}
+          style={[styles.picker, { width: 150 }]}
+        >
+          <Picker.Item
+            label="RV1960"
+            value="RV1960"
+          />
+          <Picker.Item
+            label="NVI"
+            value="NVI"
+          />
+          <Picker.Item
+            label="NTV"
+            value="NTV"
+          />
+        </Picker>
+
+        <Picker
+          selectedValue={selectedFilters.book}
           onValueChange={handleBookChange}
           style={styles.picker}
         >
@@ -146,12 +202,17 @@ const Biblia = () => {
         </Picker>
 
         <Picker
-          selectedValue={selectedChapter}
+          selectedValue={selectedFilters.chapter}
           onValueChange={handleChapterChange}
           style={styles.picker}
         >
           {Array.from(
-            { length: bibliaData?.bible?.b[selectedBook]?.c.length || 0 },
+            {
+              length:
+                bibliaData[selectedFilters.version]?.bible?.b[
+                  selectedFilters.book
+                ]?.c.length || 0,
+            },
             (_, index) => index + 1
           ).map((chapter) => (
             <Picker.Item
@@ -164,24 +225,29 @@ const Biblia = () => {
       </View>
 
       <View style={styles.content}>
-        <Text style={styles.bookTitle}>{`${nombresLibros[selectedBook]}`}</Text>
+        <Text style={styles.bookTitle}>{`${
+          nombresLibros[selectedFilters.book]
+        }`}</Text>
         <View
-          key={selectedChapter + 1}
+          key={selectedFilters.chapter + 1}
           style={styles.chapterContainer}
         >
-          <Text style={styles.chapterTitle}>{Number(selectedChapter) + 1}</Text>
+          <Text style={styles.chapterTitle}>
+            {Number(selectedFilters.chapter) + 1}
+          </Text>
 
           {Array.isArray(
-            bibliaData?.bible?.b[selectedBook]?.c[selectedChapter]?.v
+            bibliaData[selectedFilters.version]?.bible?.b[selectedFilters.book]
+              ?.c[selectedFilters.chapter]?.v
           ) &&
-            bibliaData?.bible?.b[selectedBook]?.c[selectedChapter]?.v.map(
-              (verse, verseIndex) => (
-                <Text
-                  key={verseIndex + 1}
-                  style={styles.verse}
-                >{`${selectedVerse + verseIndex + 1}. ${verse}`}</Text>
-              )
-            )}
+            bibliaData[selectedFilters.version]?.bible?.b[
+              selectedFilters.book
+            ]?.c[selectedFilters.chapter]?.v.map((verse, verseIndex) => (
+              <Text
+                key={verseIndex + 1}
+                style={styles.verse}
+              >{`${selectedFilters.verse + verseIndex + 1}. ${verse}`}</Text>
+            ))}
         </View>
       </View>
       <View style={styles.buttonContainer}>
